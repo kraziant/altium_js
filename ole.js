@@ -107,7 +107,6 @@ class OLE
 		this.header.first_difat_sector_location = this.stream.read_u32_le();
 		this.header.number_of_difat_sectors = this.stream.read_u32_le();
 
-		//console.log(this.header);
 		
 		this.header.difat = new Uint32Array(this.stream.read(436, true));
 		this.fat_sectors = [];
