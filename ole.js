@@ -40,7 +40,7 @@ class OLE
 	{
 		this.stream = new U8Stream(fileData);
 		
-		if (fileData.length < 76)
+		if (fileData.length < 1536)
 		{
 			throw new Error("File is too small to be a valid OLE compound document.");
 		}
