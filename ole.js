@@ -106,6 +106,8 @@ class OLE
 		this.header.number_of_mini_fat_sectors = this.stream.read_u32_le();
 		this.header.first_difat_sector_location = this.stream.read_u32_le();
 		this.header.number_of_difat_sectors = this.stream.read_u32_le();
+
+		//console.log(this.header);
 		
 		this.header.difat = new Uint32Array(this.stream.read(436, true));
 		this.fat_sectors = [];
@@ -113,12 +115,36 @@ class OLE
 		{
 			this.fat_sectors[i] = new FATSector(this, this.header.difat[i]);
 		}
+		
+
+		////////////////////////////////////////////////////////////////////////
+		// DIFAT chain
+		if (this.header.first_difat_sector_location != 0xfffffffe)
+		{
+			let next_difat_sector = this.header.first_difat_sector_location;
+			for (let i = 0; i < this.header.number_of_difat_sectors; i++)
+			{
+                                this.stream.seek_to(get_sector_offset(next_difat_sector));
+				let difat_chunk = new Uint32Array(this.stream.read(this.header.sector_size-4,true));
+				next_difat_sector = this.stream.read_u32_le(); // last 4 bytes is next sector number
+				for (let j=0; j<this.header.sector_size/4-1; j++)
+				{
+					this.fat_sector[109+j] = new FATSector(this, difat_chunk[j]);
+				}
+			}
+		}
+		////////////////////////////////////////////////////////////////////////
+
 		this.directory_entries = [];
 		this.directory_entries[0] = new DirectoryEntry(this, (this.header.first_directory_sector_location + 1) * this.header.sector_size);
 		this.directory_entries[1] = new DirectoryEntry(this, (this.header.first_directory_sector_location + 1) * this.header.sector_size + 128);
 		this.directory_entries[2] = new DirectoryEntry(this, (this.header.first_directory_sector_location + 1) * this.header.sector_size + 256);
 		this.directory_entries[3] = new DirectoryEntry(this, (this.header.first_directory_sector_location + 1) * this.header.sector_size + 384);
 		
+	}
+
+	get_sector_offset(sector_num){
+		return (sector_num + 1) * this.header.sector_size;
 	}
 }
 
